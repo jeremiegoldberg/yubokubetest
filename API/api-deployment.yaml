@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  labels:
+    app: yubo-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yubo-api
+  template:
+    metadata:
+      labels:
+        app: yubo-api
+    spec:
+      containers:
+        - name: yubo-api
+          image: apatora/devops-test-api:latest
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+              httpHeaders:
+            initialDelaySeconds: 3
+            periodSeconds: 3
+          resources:
+            limits:
+              memory: "2Gi"
+              cpu: "1.0"
+          env:
+            - name: REDIS_HOST
+              value: "redis-service"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yubo-redis-secret
+                  key: REDIS_PASS
+            - name: MONGO_HOST
+              value: "mongo-service"
+            - name: MONGO_PORT
+              value: "27017"
+            - name: MONGO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: yubo-mongo-secret
+                  key: MONGO_ROOT_USERNAME
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yubo-mongo-secret
+                  key: MONGO_ROOT_PASSWORD

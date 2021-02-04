@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment
+  labels:
+    app: yubo-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yubo-redis
+  template:
+    metadata:
+      labels:
+        app: yubo-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:6.0.10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          command:
+            - redis-server
+            - "/redis-master/redis.conf"
+            - "--requirepass"
+            - "${REDIS_PASS}"
+          env:
+            - name: MASTER
+              value: "true"
+            - name: REDIS_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: yubo-redis-secret
+                  key: REDIS_PASS
+          ports:
+            - containerPort: 6379
+          resources:
+            limits:
+              cpu: "1.0"
+              memory: "2.1Gi"
+          volumeMounts:
+            - name: config-volume
+              mountPath: /redis-master
+      volumes:
+        - name: config-volume
+          configMap:
+            name: redis-config

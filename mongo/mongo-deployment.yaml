@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: yubo-mongo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yubo-mongo
+  template:
+    metadata:
+      labels:
+        app: yubo-mongo
+    spec:
+      containers:
+      - name: mongodb-standalone
+        image: mongo:4.4
+        readinessProbe:
+          exec:
+            command:
+              - mongo
+              - "--eval"
+              - "db.adminCommand('ping')"
+        resources:
+          limits:
+            memory: "4Gi"
+            cpu: "1.0"
+        env:
+          - name: MONGO_INITDB_ROOT_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: yubo-mongo-secret
+                key: MONGO_ROOT_USERNAME
+          - name: MONGO_INITDB_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: yubo-mongo-secret
+                key: MONGO_ROOT_PASSWORD
